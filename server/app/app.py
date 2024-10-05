@@ -6,13 +6,25 @@ import pickle
 import requests
 from typing import List
 from fpdf import FPDF
+from sklearn.cluster import KMeans
+import pandas as pd
 
 # Constants for CSV file path
-REPO_PATH = "https://github.com/AtaKolev/tailor-flow/blob/main"
-LOCAL_CSV_PATH = "data.csv"
-PKL_MODEL_PATH = "model.pkl"
-OPENAI_API_URL = "https://api.openai.com/v1/completions"
-OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"  # Replace with your API key
+app.REPO_PATH = "https://github.com/AtaKolev/tailor-flow/blob/main"
+app.LOCAL_CSV_PATH = "data.csv"
+app.PKL_MODEL_PATH = "model.pkl"
+app.OPENAI_API_URL = "https://api.openai.com/v1/completions"
+app.OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"  # Replace with your API key
+app.CLUSTER_DICTIONARY = {
+    0 : 'High Extraversion, Low Agreeableness, Low Conscientiousness, Medium Neuroticism, Medium Openness',
+    1 : 'Medium Extraversion, Low Agreeableness, High Conscientiousness, Medium Neuroticism, High Openness',
+    2 : 'Medium Extraversion, High Agreeableness, Medium Conscientiousness, High Neuroticism, High Openness',
+    3 : 'High Extraversion, High Agreeableness, High Conscientiousness, Low Neuroticism, High Openness',
+    4 : 'Low Extraversion, Medium Agreeableness, High Conscientiousness, High Neuroticism, Low Openness'
+}
+F_COLS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5', 'Q_6', 'Q_7', 'Q_8', 'Q_9', 'Q_10']
+REVERSED_QUESTIONS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5']
+
 
 
 class BackendApp:
@@ -58,10 +70,22 @@ class BackendApp:
         except subprocess.CalledProcessError as e:
             print(f"An error occurred: {e}")
 
+    def processReversedQuestions(data):
+        data[REVERSED_QUESTIONS] = data[REVERSED_QUESTIONS].apply(lambda col: 6 - col)
+        return data
+
+    def _fitModel(self, model):
+        data = pd.read_csv('data.csv')
+        data = self.processReversedQuestions(data)
+        X = data[F_COLS]
+        model.fit(X)
+
+        return model
+
     # Function to load and integrate ML model
     def loadEvalML(self):
-        with open(PKL_MODEL_PATH, 'rb') as model_file:
-            self.model = pickle.load(model_file)
+        kmeans = KMeans(n_clusters=5, random_state=42)
+        self.model = self._fitModel(kmeans)
 
     def evaluateArray(self, array: List[int]) -> int:
         if self.model is None:
