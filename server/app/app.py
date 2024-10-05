@@ -8,7 +8,8 @@ from typing import List
 from fpdf import FPDF
 from sklearn.cluster import KMeans
 import pandas as pd
-from flask import Flask, request, render_template, url_for
+from flask import Flask, request, render_template, url_for, redirect
+import numpy as np
 
 ################################################################################################################
 # APP VARIABLES
@@ -19,7 +20,7 @@ app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 # Constants for CSV file path
 app.REPO_PATH = "https://github.com/AtaKolev/tailor-flow/blob/main"
-app.LOCAL_CSV_PATH = "server\app\data\data.csv"
+app.LOCAL_CSV_PATH = r"D:\Repositories\tailor-flow\server\app\data\data.csv"
 app.PKL_MODEL_PATH = "model.pkl"
 app.OPENAI_API_URL = "https://api.openai.com/v1/completions"
 app.OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"  # Replace with your API key
@@ -30,8 +31,8 @@ app.CLUSTER_DICTIONARY = {
     3 : 'High Extraversion, High Agreeableness, High Conscientiousness, Low Neuroticism, High Openness',
     4 : 'Low Extraversion, Medium Agreeableness, High Conscientiousness, High Neuroticism, Low Openness'
 }
-F_COLS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5', 'Q_6', 'Q_7', 'Q_8', 'Q_9', 'Q_10']
-REVERSED_QUESTIONS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5']
+app.F_COLS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5', 'Q_6', 'Q_7', 'Q_8', 'Q_9', 'Q_10']
+app.REVERSED_QUESTIONS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5']
 
 
 
@@ -61,9 +62,9 @@ class BackendApp:
 
     # Function to pull the CSV data file from GitHub repo
     def pullDataCSV(self):
-        response = requests(REPO_PATH)
+        response = requests(app.REPO_PATH)
         if response.status_code == 200:
-            with open(LOCAL_CSV_PATH, 'w') as file:
+            with open(app.LOCAL_CSV_PATH, 'w') as file:
                 file.write(response.text)
         else:
             raise Exception("Failed to pull CSV from repository.")
@@ -79,13 +80,13 @@ class BackendApp:
             print(f"An error occurred: {e}")
 
     def processReversedQuestions(data):
-        data[REVERSED_QUESTIONS] = data[REVERSED_QUESTIONS].apply(lambda col: 6 - col)
+        data[app.REVERSED_QUESTIONS] = data[app.REVERSED_QUESTIONS].apply(lambda col: 6 - col)
         return data
 
     def _fitModel(self, model):
         data = pd.read_csv('data.csv')
         data = self.processReversedQuestions(data)
-        X = data[F_COLS]
+        X = data[app.F_COLS]
         model.fit(X)
 
         return model
@@ -95,7 +96,7 @@ class BackendApp:
         kmeans = KMeans(n_clusters=5, random_state=42)
         self.model = self._fitModel(kmeans)
 
-    def evaluateArray(self, array: List[int]) -> int:
+    def evaluateArray(self, array):
         if self.model is None:
             raise Exception("ML model not loaded. Call loadEvalML() first.")
         # Assuming the model takes an array and returns an integer
@@ -116,7 +117,7 @@ class BackendApp:
 
     # Function to add a row to the CSV file
     def addRowToData(self, array: List):
-        with open(LOCAL_CSV_PATH, mode='a', newline='') as file:
+        with open(app.LOCAL_CSV_PATH, mode='a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(array)
 
@@ -172,20 +173,73 @@ class BackendApp:
         except Exception as e:
             return str(e)
         
+    def updateData(arr):
+        whole_df = pd.read_csv(app.LOCAL_CSV_PATH)
+        new_id = whole_df.iloc[-1, 1] + 1 
+        df_row = {'Date' : [f"0{datetime.today().day}/{datetime.today().month}/{datetime.today().year}"],
+                'ID' : [new_id]}
+        for i, ele in enumerate(arr):
+            df_row.update({f'Q_{i+1}' : [ele]})
+        whole_df = pd.concat((whole_df, pd.DataFrame(df_row)), axis = 0).reset_index(drop=True)
+        pd.to_csv(app.LOCAL_CSV_PATH, index = False)
+        
+
+
+        
+be_obj = BackendApp()
 
 ################################################################################################################
 # ENDPOINTS
 ################################################################################################################
-@app.route('/', methods = ['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    if request.method == 'GET':
-        function = str(boxes[0])
-        password = str(boxes[1])
-        return render_template('survey.html')
-    else:
-        return render_template('index.html')
-    
+    if request.method == 'POST':
+        # Get the form data from the 'career-form' input
+        boxes = request.form.getlist('career-form')
+        if len(boxes) >= 2:  # Ensure there are at least 2 items submitted
+            app.desired_role = str(boxes[0])
+            app.skills_needed = str(boxes[1])
 
+        # Redirect to the 'survey' route after processing the form
+        return redirect(url_for('survey'))
+    else:
+        # Render the home page with the form
+        return render_template('index.html')
+
+@app.route('/survey.html', methods=['GET', 'POST'])
+def survey():
+    if request.method == 'POST':
+        try:
+            answers = [
+                int(request.form['q1']),
+                int(request.form['q2']),
+                int(request.form['q3']),
+                int(request.form['q4']),
+                int(request.form['q5']),
+                int(request.form['q6']),
+                int(request.form['q7']),
+                int(request.form['q8']),
+                int(request.form['q9']),
+                int(request.form['q10'])
+            ]
+            answers_array = np.array(answers)
+            answers_array[:5] = 6 - answers_array[:5]
+            if be_obj.model is None:
+                be_obj.loadEvalML()
+                cluster = be_obj.evaluateArray(answers_array)
+            else:
+                cluster = be_obj.evaluateArray(answers_array)
+            be_obj.updateData(answers_array)
+            app.psycho_eval = app.CLUSTER_DICTIONARY[cluster]
+            
+        except KeyError as e:
+            # Handle missing keys if any question was left unanswered
+            return f"Missing answer for {str(e)}"
+        
+        return 
+    else:
+        # Handle GET request for the survey page
+        return render_template('survey.html')
 
 # Example usage
 if __name__ == '__main__':
