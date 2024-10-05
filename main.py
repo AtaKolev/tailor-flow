@@ -6,6 +6,7 @@ import requests
 from typing import List
 from fpdf import FPDF
 from sklearn.cluster import KMeans
+import pandas as pd
 
 # Constants for CSV file path
 CSV_REPO_PATH = "https://github.com/AtaKolev/tailor-flow/blob/main/data.csv"
@@ -20,7 +21,8 @@ CLUSTER_DICTIONARY = {
     3 : 'High Extraversion, High Agreeableness, High Conscientiousness, Low Neuroticism, High Openness',
     4 : 'Low Extraversion, Medium Agreeableness, High Conscientiousness, High Neuroticism, Low Openness'
 }
-
+F_COLS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5', 'Q_6', 'Q_7', 'Q_8', 'Q_9', 'Q_10']
+REVERSED_QUESTIONS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5']
 
 class BackendApp:
     def __init__(self):
@@ -57,11 +59,23 @@ class BackendApp:
     def pushDataCSV(self):
         # Assuming authentication and Git interaction will be implemented
         raise NotImplementedError("CSV push functionality to be implemented.")
+    
+    def processReversedQuestions(data):
+        data[REVERSED_QUESTIONS] = data[REVERSED_QUESTIONS].apply(lambda col: 6 - col)
+        return data
+
+    def _fitModel(self, model):
+        data = pd.read_csv('data.csv')
+        data = self.processReversedQuestions(data)
+        X = data[F_COLS]
+        model.fit(X)
+
+        return model
 
     # Function to load and integrate ML model
     def loadEvalML(self):
         kmeans = KMeans(n_clusters=5, random_state=42)
-        return kmeans
+        self.model = self._fitModel(kmeans)
 
     def evaluateArray(self, array: List[int]) -> int:
         if self.model is None:
