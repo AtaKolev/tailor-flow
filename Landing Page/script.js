@@ -1,12 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('career-form');
+    const currentRoleInput = document.getElementById('current-role');
     const futureRoleInput = document.getElementById('future-role');
     const skillsInput = document.getElementById('skills');
     const submitButton = document.querySelector('button[type="submit"]');
     const refineButton = document.getElementById('refine-button');
 
     function checkInputs() {
-        if (futureRoleInput.value.trim() !== '' && skillsInput.value.trim() !== '') {
+        if (currentRoleInput.value.trim() !== '' && 
+            futureRoleInput.value.trim() !== '' && 
+            skillsInput.value.trim() !== '') {
             submitButton.classList.add('visible');
         } else {
             submitButton.classList.remove('visible');
@@ -19,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    currentRoleInput.addEventListener('input', checkInputs);
     futureRoleInput.addEventListener('input', checkInputs);
     skillsInput.addEventListener('input', checkInputs);
 
@@ -26,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         console.log('Form submitted:');
+        console.log('Current Role:', currentRoleInput.value);
         console.log('Future Role:', futureRoleInput.value);
         console.log('Skills:', skillsInput.value);
 
