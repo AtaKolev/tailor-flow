@@ -19,16 +19,20 @@
     <main>
         <h1>Design Your Tech Career Path</h1>
         <p class="subtitle">Input your desired future role and skills to get a personalized learning path.</p>
-        <form id="career-form">
+
+        <!-- Add 'action' and 'method' attributes to the form -->
+        <form id="career-form" action="/" method="POST">
             <div class="form-group">
                 <label for="future-role">Desired Future Role</label>
-                <input type="text" id="future-role" placeholder="e.g., Senior Software Engineer" required>
+                <!-- Add a 'name' attribute to the input -->
+                <input type="text" id="future-role" name="career-form" placeholder="e.g., Senior Software Engineer" required>
             </div>
 
             <div class="form-group">
                 <label for="skills">Skills to Develop</label>
                 <div class="textarea-container">
-                    <textarea id="skills" placeholder="e.g., Machine Learning, Cloud Architecture, Team Leadership" required></textarea>
+                    <!-- Add a 'name' attribute to the textarea -->
+                    <textarea id="skills" name="career-form" placeholder="e.g., Machine Learning, Cloud Architecture, Team Leadership" required></textarea>
                     <button type="button" id="refine-button" class="refine-button">
                         <i class="fas fa-wand-magic-sparkles"></i> Refine
                     </button>

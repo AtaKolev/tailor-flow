@@ -30,7 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Skills:', skillsInput.value);
 
         // Here you would typically send this data to a server or process it further
-        alert('Thank you for submitting! Check the console for form data.');
+        // alert('Thank you for submitting! Check the console for form data.');
+        window.location.href = 'survey.html';  // Adjust the path if survey.html is in a subfolder
     });
 
     refineButton.addEventListener('click', () => {

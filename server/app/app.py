@@ -8,7 +8,7 @@ from typing import List
 from fpdf import FPDF
 from sklearn.cluster import KMeans
 import pandas as pd
-from flask import Flask, request, render_template, url_for
+from flask import Flask, request, render_template, url_for, redirect
 
 ################################################################################################################
 # APP VARIABLES
@@ -61,9 +61,9 @@ class BackendApp:
 
     # Function to pull the CSV data file from GitHub repo
     def pullDataCSV(self):
-        response = requests(REPO_PATH)
+        response = requests(app.REPO_PATH)
         if response.status_code == 200:
-            with open(LOCAL_CSV_PATH, 'w') as file:
+            with open(app.LOCAL_CSV_PATH, 'w') as file:
                 file.write(response.text)
         else:
             raise Exception("Failed to pull CSV from repository.")
@@ -116,7 +116,7 @@ class BackendApp:
 
     # Function to add a row to the CSV file
     def addRowToData(self, array: List):
-        with open(LOCAL_CSV_PATH, mode='a', newline='') as file:
+        with open(app.LOCAL_CSV_PATH, mode='a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(array)
 
@@ -176,16 +176,29 @@ class BackendApp:
 ################################################################################################################
 # ENDPOINTS
 ################################################################################################################
-@app.route('/', methods = ['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    if request.method == 'GET':
-        function = str(boxes[0])
-        password = str(boxes[1])
+    if request.method == 'POST':
+        # Get the form data from the 'career-form' input
+        boxes = request.form.getlist('career-form')
+        if len(boxes) >= 2:  # Ensure there are at least 2 items submitted
+            app.desired_role = str(boxes[0])
+            app.skills_needed = str(boxes[1])
+
+        # Redirect to the 'survey' route after processing the form
+        return redirect(url_for('survey'))
+    else:
+        # Render the home page with the form
+        return render_template('index.html')
+
+@app.route('/survey.html', methods=['GET', 'POST'])
+def survey():
+    if request.method == 'POST':
+        # Handle POST request for the survey page (if you have additional form logic here)
         return render_template('survey.html')
     else:
-        return render_template('index.html')
-    
-
+        # Handle GET request for the survey page
+        return render_template('survey.html')
 
 # Example usage
 if __name__ == '__main__':
