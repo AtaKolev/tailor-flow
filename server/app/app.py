@@ -1,5 +1,5 @@
 import csv
-import datetime
+from datetime import datetime
 import subprocess
 import os
 import pickle
@@ -25,7 +25,7 @@ app.LOCAL_CSV_PATH = r"D:\Repositories\tailor-flow\server\app\data\data.csv"
 app.PKL_MODEL_PATH = "model.pkl"
 app.OPENAI_API_URL = "https://api.openai.com/v1/completions"
 app.OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"  # Replace with your API key
-app.CLUSTER_DICTIONARY = {
+CLUSTER_DICTIONARY = {
     0 : 'High Extraversion, Low Agreeableness, Low Conscientiousness, Medium Neuroticism, Medium Openness',
     1 : 'Medium Extraversion, Low Agreeableness, High Conscientiousness, Medium Neuroticism, High Openness',
     2 : 'Medium Extraversion, High Agreeableness, Medium Conscientiousness, High Neuroticism, High Openness',
@@ -34,12 +34,24 @@ app.CLUSTER_DICTIONARY = {
 }
 app.F_COLS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5', 'Q_6', 'Q_7', 'Q_8', 'Q_9', 'Q_10']
 app.REVERSED_QUESTIONS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5']
-
-
+current_role = None
+desired_role = None
+skills_needed = None
+cluster_dictionary = {
+    0 : 'High Extraversion, Low Agreeableness, Low Conscientiousness, Medium Neuroticism, Medium Openness',
+    1 : 'Medium Extraversion, Low Agreeableness, High Conscientiousness, Medium Neuroticism, High Openness',
+    2 : 'Medium Extraversion, High Agreeableness, Medium Conscientiousness, High Neuroticism, High Openness',
+    3 : 'High Extraversion, High Agreeableness, High Conscientiousness, Low Neuroticism, High Openness',
+    4 : 'Low Extraversion, Medium Agreeableness, High Conscientiousness, High Neuroticism, Low Openness'
+}
 
 class BackendApp:
     def __init__(self):
-        self.model = None
+        self.model = KMeans(n_clusters=5, random_state=42)
+        data = pd.read_csv(app.LOCAL_CSV_PATH)
+        data[app.REVERSED_QUESTIONS] = data[app.REVERSED_QUESTIONS].apply(lambda col: 6 - col)
+        X = data[app.F_COLS]
+        self.model.fit(X)
 
     # Function to validate if an array is valid
     # Need frontend connection here
@@ -80,12 +92,12 @@ class BackendApp:
         except subprocess.CalledProcessError as e:
             print(f"An error occurred: {e}")
 
-    def processReversedQuestions(data):
+    def processReversedQuestions(self, data):
         data[app.REVERSED_QUESTIONS] = data[app.REVERSED_QUESTIONS].apply(lambda col: 6 - col)
         return data
 
     def _fitModel(self, model):
-        data = pd.read_csv('data.csv')
+        data = pd.read_csv(app.LOCAL_CSV_PATH)
         data = self.processReversedQuestions(data)
         X = data[app.F_COLS]
         model.fit(X)
@@ -101,6 +113,7 @@ class BackendApp:
         if self.model is None:
             raise Exception("ML model not loaded. Call loadEvalML() first.")
         # Assuming the model takes an array and returns an integer
+        print(array.shape)
         return self.model.predict([array])[0]
 
     # Function to create an array with 13 elements
@@ -174,7 +187,7 @@ class BackendApp:
         except Exception as e:
             return str(e)
         
-    def updateData(arr):
+    def updateData(self, arr):
         whole_df = pd.read_csv(app.LOCAL_CSV_PATH)
         new_id = whole_df.iloc[-1, 1] + 1 
         df_row = {'Date' : [f"0{datetime.today().day}/{datetime.today().month}/{datetime.today().year}"],
@@ -182,25 +195,30 @@ class BackendApp:
         for i, ele in enumerate(arr):
             df_row.update({f'Q_{i+1}' : [ele]})
         whole_df = pd.concat((whole_df, pd.DataFrame(df_row)), axis = 0).reset_index(drop=True)
-        pd.to_csv(app.LOCAL_CSV_PATH, index = False)
+        whole_df.to_csv(app.LOCAL_CSV_PATH, index = False)
         
 
-
-        
 be_obj = BackendApp()
+
+        
+
 
 ################################################################################################################
 # ENDPOINTS
 ################################################################################################################
 @app.route('/', methods=['GET', 'POST'])
 def home():
+    global current_role
+    global desired_role
+    global skills_needed 
     if request.method == 'POST':
         # Get the form data from the 'career-form' input
-        boxes = request.form.getlist('career-form')
-        if len(boxes) >= 3:  # Ensure there are at least 2 items submitted
-            app.current_role = str(boxes[0])
-            app.desired_role = str(boxes[1])
-            app.skills_needed = str(boxes[2])
+        current_role = request.form.get('current_role')
+        desired_role = request.form.get('desired_role')
+        skills_needed = request.form.get('skills_needed')
+        
+        print(current_role)
+        print(desired_role)
 
         # Redirect to the 'survey' route after processing the form
         return redirect(url_for('survey'))
@@ -210,33 +228,30 @@ def home():
 
 @app.route('/survey.html', methods=['GET', 'POST'])
 def survey():
+    global be_obj
+    global current_role
+    global desired_role
+    global skills_needed
+    global cluster_dictionary
     if request.method == 'POST':
         try:
-            answers = [
-                int(request.form['q1']),
-                int(request.form['q2']),
-                int(request.form['q3']),
-                int(request.form['q4']),
-                int(request.form['q5']),
-                int(request.form['q6']),
-                int(request.form['q7']),
-                int(request.form['q8']),
-                int(request.form['q9']),
-                int(request.form['q10'])
-            ]
+            answers = [int(value) for value in request.form.values()]
             answers_array = np.array(answers)
             answers_array[:5] = 6 - answers_array[:5]
+            if answers_array.ndim == 1:
+                answers_array = answers_array.reshape(1, -1)
+            X = pd.DataFrame(answers_array.reshape(1, -1), columns = [f'Q_{i}' for i in range(1, 11)])
             if be_obj.model is None:
                 be_obj.loadEvalML()
-                cluster = be_obj.evaluateArray(answers_array)
+                cluster = be_obj.evaluateArray(X)
             else:
-                cluster = be_obj.evaluateArray(answers_array)
-            be_obj.updateData(answers_array)
-            psycho_eval = app.CLUSTER_DICTIONARY[cluster]
-            response_message = prompt_zon.get_personalized_learning_path(persType = psycho_eval,
-                                          curr_work = app.current_role,
-                                          desired_work = app.desired_role,
-                                          desired_skills = app.skills_needed)
+                cluster = be_obj.model.predict(X)[0]
+            #be_obj.updateData(X)
+            psycho_eval = cluster_dictionary[cluster]
+            _ = prompt_zon.get_personalized_learning_path(persType = psycho_eval,
+                                          curr_work = current_role,
+                                          desired_work = desired_role,
+                                          desired_skills = skills_needed)
         except KeyError as e:
             # Handle missing keys if any question was left unanswered
             return f"Missing answer for {str(e)}"
@@ -246,15 +261,17 @@ def survey():
         # Handle GET request for the survey page
         return render_template('survey.html')
 
-@app.route('/results.html', methods = ['POST'])
+@app.route('/results.html', methods = ['GET'])
 def results():
     try:
+        # Read the content of the generated learning path file
         with open("learning_path.txt", "r") as file:
             file_content = file.read()
     except FileNotFoundError:
+        # Handle the case where the file is not found
         file_content = "File not found."
 
-    # Pass the file content to the template
+    # Render the results page with the learning path content
     return render_template('results.html', content=file_content)
 
 # Example usage

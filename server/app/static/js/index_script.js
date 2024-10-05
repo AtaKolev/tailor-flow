@@ -22,16 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
     futureRoleInput.addEventListener('input', checkInputs);
     skillsInput.addEventListener('input', checkInputs);
 
+    // Remove preventDefault to allow form submission
     form.addEventListener('submit', (e) => {
-        e.preventDefault();
-
         console.log('Form submitted:');
         console.log('Future Role:', futureRoleInput.value);
         console.log('Skills:', skillsInput.value);
 
-        // Here you would typically send this data to a server or process it further
-        // alert('Thank you for submitting! Check the console for form data.');
-        window.location.href = 'survey.html';  // Adjust the path if survey.html is in a subfolder
+        // Form will be submitted to the Flask backend with the default behavior
+        // No need for window.location.href unless you want to prevent the form submission
     });
 
     refineButton.addEventListener('click', () => {

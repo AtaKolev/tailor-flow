@@ -41,6 +41,7 @@
             </div>
         </div>
         <div class="container">
+            <form id="survey-form" action="/survey.html" method="POST">
             <div class="survey">
                 <div class="question">
                     <p>I see myself as someone who is reserved.</p>
@@ -149,7 +150,8 @@
                     </div>
                 </div>
             </div>
-            <button id="next-button">Next</button>
+            <button type="submit" id="next-button">Next</button>
+        </form>
         </div>
     </div>
     <script src="{{ url_for('static', filename='js/survey_script.js') }}"></script>

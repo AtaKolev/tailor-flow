@@ -11,8 +11,7 @@
     <header>
         <nav>
             <div class="logo">🚀 T&lt;AI&gt;LOR.FLOW</div>
-            <div class="nav-links">
-            </div>
+            <div class="nav-links"></div>
         </nav>
     </header>
 
@@ -20,38 +19,40 @@
         <h1>Design Your Tech Career Path</h1>
         <p class="subtitle">Input your desired future role and skills to get a personalized learning path.</p>
 
-        <!-- Add 'action' and 'method' attributes to the form -->
+        <!-- Only one form tag with proper 'action' and 'method' attributes -->
         <form id="career-form" action="/" method="POST">
             <p class="subtitle">Input your current role, desired future role, and skills to get a personalized learning path.</p>
-        <form id="career-form">
+
             <div class="form-group">
                 <label for="current-role">Current Position</label>
-                <input type="text" id="current-role" placeholder="e.g., Junior Software Developer" required>
+                <!-- Add a 'name' attribute to this input -->
+                <input type="text" id="current-role" name="current_role" placeholder="e.g., Junior Software Developer" required>
             </div>
+
             <div class="form-group">
                 <label for="future-role">Desired Future Role</label>
-                <!-- Add a 'name' attribute to the input -->
-                <input type="text" id="future-role" name="career-form" placeholder="e.g., Senior Software Engineer" required>
+                <!-- Each input should have a unique 'name' attribute -->
+                <input type="text" id="future-role" name="desired_role" placeholder="e.g., Senior Software Engineer" required>
             </div>
 
             <div class="form-group">
                 <label for="skills">Skills to Develop</label>
                 <div class="textarea-container">
-                    <!-- Add a 'name' attribute to the textarea -->
-                    <textarea id="skills" name="career-form" placeholder="e.g., Machine Learning, Cloud Architecture, Team Leadership" required></textarea>
+                    <!-- Add a unique 'name' attribute to the textarea -->
+                    <textarea id="skills" name="skills_needed" placeholder="e.g., Machine Learning, Cloud Architecture, Team Leadership" required></textarea>
                     <button type="button" id="refine-button" class="refine-button">
                         <i class="fas fa-wand-magic-sparkles"></i> Refine
                     </button>
                 </div>
             </div>
+
             <button type="submit">Build Your Psychographic Profile</button>
         </form>
     </main>
 
     <footer>
         <p>T&lt;AI&gt;LOR.FLOW</p>
-        <div class="footer-links">
-        </div>
+        <div class="footer-links"></div>
     </footer>
 
     <script src="{{ url_for('static', filename='js/index_script.js') }}"></script>

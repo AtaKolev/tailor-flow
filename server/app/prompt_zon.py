@@ -27,11 +27,12 @@ class Transition(BaseModel):
     steps: List[Step]
 
 # Generate personalized learning path
-def get_personalized_learning_path(persType,curr_work,desired_work,desired_skills):
+def get_personalized_learning_path(persType, curr_work, desired_work, desired_skills):
+    print(persType)
     prompt = (
-        "I am a " + persType +
-        "based on Big Five Inventory, short version (BFI-10) and am working as a" + curr_work +
-        "I am looking for a personalised learning path to become " + desired_work +
+        f"I am a {persType}"
+        f"based on Big Five Inventory, short version (BFI-10) and am working as a {curr_work}" 
+        f"I am looking for a personalised learning path to become {desired_work}"
         " that contains courses and would be suitable for both my personality type and my career goals. "
         "Focus on my personality type and adjust the courses accordingly "
         "Create a step by step guide."
