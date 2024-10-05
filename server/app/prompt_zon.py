@@ -30,9 +30,12 @@ class Transition(BaseModel):
 def get_personalized_learning_path(persType,curr_work,desired_work,desired_skills):
     prompt = (
         "I am a " + persType +
-        "based on Big Five Inventory, short version (BFI-10) and am working as " + curr_work +
-        "I am looking for a personalised learning path to become" + desired_work + " that contains courses and would be suitable for both my personality type and my career goals. Focus on my personality type and adjust the courses accordingly "
+        "based on Big Five Inventory, short version (BFI-10) and am working as a" + curr_work +
+        "I am looking for a personalised learning path to become " + desired_work + 
+        " that contains courses and would be suitable for both my personality type and my career goals. "
+        "Focus on my personality type and adjust the courses accordingly "
         "Create a step by step guide."
+        "Don't mention the personality types in the suggestions"
     )
     
     response = openai.Completion.create(
