@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personalized Learning Path</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/result_styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>T<span>&lt;AI&gt;</span>LOR.FLOW</h1>
+    </header>
+    <main>
+        <h2>Your Personalized Learning Path</h2>
+        <pre>{{ content }}</pre>
+    </main>
+    <script src="{{ url_for('static', filename='js/result_script.js') }}"></script>
+</body>
+</html>

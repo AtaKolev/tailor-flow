@@ -10,6 +10,7 @@ from sklearn.cluster import KMeans
 import pandas as pd
 from flask import Flask, request, render_template, url_for, redirect
 import numpy as np
+import prompt_zon
 
 ################################################################################################################
 # APP VARIABLES
@@ -196,9 +197,10 @@ def home():
     if request.method == 'POST':
         # Get the form data from the 'career-form' input
         boxes = request.form.getlist('career-form')
-        if len(boxes) >= 2:  # Ensure there are at least 2 items submitted
-            app.desired_role = str(boxes[0])
-            app.skills_needed = str(boxes[1])
+        if len(boxes) >= 3:  # Ensure there are at least 2 items submitted
+            app.current_role = str(boxes[0])
+            app.desired_role = str(boxes[1])
+            app.skills_needed = str(boxes[2])
 
         # Redirect to the 'survey' route after processing the form
         return redirect(url_for('survey'))
@@ -230,16 +232,30 @@ def survey():
             else:
                 cluster = be_obj.evaluateArray(answers_array)
             be_obj.updateData(answers_array)
-            app.psycho_eval = app.CLUSTER_DICTIONARY[cluster]
-            
+            psycho_eval = app.CLUSTER_DICTIONARY[cluster]
+            response_message = prompt_zon.get_personalized_learning_path(persType = psycho_eval,
+                                          curr_work = app.current_role,
+                                          desired_work = app.desired_role,
+                                          desired_skills = app.skills_needed)
         except KeyError as e:
             # Handle missing keys if any question was left unanswered
             return f"Missing answer for {str(e)}"
         
-        return 
+        return redirect(url_for('results'))
     else:
         # Handle GET request for the survey page
         return render_template('survey.html')
+
+@app.route('/results.html', methods = ['POST'])
+def results():
+    try:
+        with open("learning_path.txt", "r") as file:
+            file_content = file.read()
+    except FileNotFoundError:
+        file_content = "File not found."
+
+    # Pass the file content to the template
+    return render_template('results.html', content=file_content)
 
 # Example usage
 if __name__ == '__main__':
