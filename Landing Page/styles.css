@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap');
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    background-color: #f8f8f8;
+    padding: 1rem;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.nav-links a {
+    margin-left: 1rem;
+    text-decoration: none;
+    color: #333;
+}
+
+main {
+    flex-grow: 1;
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+h1 {
+    font-family: 'Sixtyfour', cursive;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: black;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.form-group {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    text-align: left;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+textarea {
+    height: 100px;
+    resize: vertical;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.6s, opacity 0.8s, visibility 0.8s;
+    opacity: 0;
+    visibility: hidden;
+}
+
+button.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+footer {
+    background-color: #f8f8f8;
+    padding: 1rem;
+    text-align: center;
+}
+
+.footer-links {
+    margin-top: 0.5rem;
+}
+
+.footer-links a {
+    margin: 0 0.5rem;
+    color: #333;
+    text-decoration: none;
+}
+
+footer p {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 700;
+}
+
+.textarea-container {
+    position: relative;
+    width: 100%;
+}
+
+.refine-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: #f8f9fa;
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: none;
+    transition: background-color 0.3s, opacity 0.5s, visibility 0.5s;
+    color: black;
+}
+
+.refine-button.visible {
+    display: inline-block;
+}
+
+.refine-button:hover {
+    background-color: #e2e6ea;
+}
+
+.refine-button i {
+    color: black;
+}
