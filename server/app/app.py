@@ -8,10 +8,18 @@ from typing import List
 from fpdf import FPDF
 from sklearn.cluster import KMeans
 import pandas as pd
+from flask import Flask, request, render_template, url_for
+
+################################################################################################################
+# APP VARIABLES
+################################################################################################################
+app = Flask(__name__, static_url_path='/static', static_folder='static')
+
+
 
 # Constants for CSV file path
 app.REPO_PATH = "https://github.com/AtaKolev/tailor-flow/blob/main"
-app.LOCAL_CSV_PATH = "data.csv"
+app.LOCAL_CSV_PATH = "server\app\data\data.csv"
 app.PKL_MODEL_PATH = "model.pkl"
 app.OPENAI_API_URL = "https://api.openai.com/v1/completions"
 app.OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"  # Replace with your API key
@@ -115,7 +123,7 @@ class BackendApp:
     # Helper function to get the last ID from CSV
     def getLastIDFromCSV(self) -> int:
         try:
-            with open(LOCAL_CSV_PATH, mode='r') as file:
+            with open(app.LOCAL_CSV_PATH, mode='r') as file:
                 reader = csv.reader(file)
                 rows = list(reader)
                 if len(rows) > 1:
@@ -130,14 +138,14 @@ class BackendApp:
     def callChatGPT(self, prompt: str) -> str:
         headers = {
             'Content-Type': 'application/json',
-            'Authorization': f'Bearer {OPENAI_API_KEY}'
+            'Authorization': f'Bearer {app.OPENAI_API_KEY}'
         }
         data = {
             'model': 'text-davinci-003',
             'prompt': prompt,
             'max_tokens': 100
         }
-        response = requests.post(OPENAI_API_URL, headers=headers, json=data)
+        response = requests.post(app.OPENAI_API_URL, headers=headers, json=data)
         if response.status_code == 200:
             return response.json().get('choices', [{}])[0].get('text', '').strip()
         else:
@@ -163,19 +171,22 @@ class BackendApp:
             return send_file(filename, as_attachment=False)
         except Exception as e:
             return str(e)
+        
+
+################################################################################################################
+# ENDPOINTS
+################################################################################################################
+@app.route('/', methods = ['GET', 'POST'])
+def home():
+    if request.method == 'GET':
+        function = str(boxes[0])
+        password = str(boxes[1])
+        return render_template('survey.html')
+    else:
+        return render_template('index.html')
+    
 
 
 # Example usage
-if __name__ == "__main__":
-    backend = BackendApp()   
-
-    fArray = backend.validFrontEndArray()#get the array from frontend
-    fDesires = backend.getDesires()#get the desires array from frontend
-    backend.pullDataCSV()
-
-    backend.loadEvalML()
-    newRow = backend.addRowToData(backend.createArray(fArray))  
-
-    backend.pushDataCSV()
-    finalPDF = backend.chatGPTWrapper(backend.callChatGPT())
-    backend.sendPdfFront(finalPDF)
+if __name__ == '__main__':
+    app.run(debug=True)
