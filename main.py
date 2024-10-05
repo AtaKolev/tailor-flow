@@ -5,6 +5,7 @@ import pickle
 import requests
 from typing import List
 from fpdf import FPDF
+from sklearn.cluster import KMeans
 
 # Constants for CSV file path
 CSV_REPO_PATH = "https://github.com/AtaKolev/tailor-flow/blob/main/data.csv"
@@ -12,6 +13,13 @@ LOCAL_CSV_PATH = "data.csv"
 PKL_MODEL_PATH = "model.pkl"
 OPENAI_API_URL = "https://api.openai.com/v1/completions"
 OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"  # Replace with your API key
+CLUSTER_DICTIONARY = {
+    0 : 'High Extraversion, Low Agreeableness, Low Conscientiousness, Medium Neuroticism, Medium Openness',
+    1 : 'Medium Extraversion, Low Agreeableness, High Conscientiousness, Medium Neuroticism, High Openness',
+    2 : 'Medium Extraversion, High Agreeableness, Medium Conscientiousness, High Neuroticism, High Openness',
+    3 : 'High Extraversion, High Agreeableness, High Conscientiousness, Low Neuroticism, High Openness',
+    4 : 'Low Extraversion, Medium Agreeableness, High Conscientiousness, High Neuroticism, Low Openness'
+}
 
 
 class BackendApp:
@@ -52,8 +60,8 @@ class BackendApp:
 
     # Function to load and integrate ML model
     def loadEvalML(self):
-        with open(PKL_MODEL_PATH, 'rb') as model_file:
-            self.model = pickle.load(model_file)
+        kmeans = KMeans(n_clusters=5, random_state=42)
+        return kmeans
 
     def evaluateArray(self, array: List[int]) -> int:
         if self.model is None:
