@@ -1,34 +1,26 @@
 import csv
 import datetime
+import subprocess
 import os
 import pickle
 import requests
 from typing import List
 from fpdf import FPDF
-from sklearn.cluster import KMeans
-import pandas as pd
 
 # Constants for CSV file path
-CSV_REPO_PATH = "https://github.com/AtaKolev/tailor-flow/blob/main/data.csv"
+REPO_PATH = "https://github.com/AtaKolev/tailor-flow/blob/main"
 LOCAL_CSV_PATH = "data.csv"
 PKL_MODEL_PATH = "model.pkl"
 OPENAI_API_URL = "https://api.openai.com/v1/completions"
 OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"  # Replace with your API key
-CLUSTER_DICTIONARY = {
-    0 : 'High Extraversion, Low Agreeableness, Low Conscientiousness, Medium Neuroticism, Medium Openness',
-    1 : 'Medium Extraversion, Low Agreeableness, High Conscientiousness, Medium Neuroticism, High Openness',
-    2 : 'Medium Extraversion, High Agreeableness, Medium Conscientiousness, High Neuroticism, High Openness',
-    3 : 'High Extraversion, High Agreeableness, High Conscientiousness, Low Neuroticism, High Openness',
-    4 : 'Low Extraversion, Medium Agreeableness, High Conscientiousness, High Neuroticism, Low Openness'
-}
-F_COLS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5', 'Q_6', 'Q_7', 'Q_8', 'Q_9', 'Q_10']
-REVERSED_QUESTIONS = ['Q_1', 'Q_2', 'Q_3', 'Q_4', 'Q_5']
+
 
 class BackendApp:
     def __init__(self):
         self.model = None
 
     # Function to validate if an array is valid
+    # Need frontend connection here
     def validFrontEndArray(self, array: List[int]) -> List[int]:
         # receive array from frontend here
         if all(isinstance(i, int) and 0 <= i <= 4 for i in array):
@@ -37,6 +29,7 @@ class BackendApp:
             raise ValueError("Array contains invalid elements. Only integers between 0-4 are allowed.")
 
     # Function to create a desires object
+    # Need frontend connection here
     def getDesires(self, desires: List[str]) -> dict:
         # receive desires from frontend here
         if len(desires) != 2:
@@ -48,7 +41,7 @@ class BackendApp:
 
     # Function to pull the CSV data file from GitHub repo
     def pullDataCSV(self):
-        response = requests.get(CSV_REPO_PATH)
+        response = requests(REPO_PATH)
         if response.status_code == 200:
             with open(LOCAL_CSV_PATH, 'w') as file:
                 file.write(response.text)
@@ -56,26 +49,19 @@ class BackendApp:
             raise Exception("Failed to pull CSV from repository.")
 
     # Function to push the CSV data file to GitHub repo (stub for versioning and repository interaction)
-    def pushDataCSV(self):
-        # Assuming authentication and Git interaction will be implemented
-        raise NotImplementedError("CSV push functionality to be implemented.")
-    
-    def processReversedQuestions(data):
-        data[REVERSED_QUESTIONS] = data[REVERSED_QUESTIONS].apply(lambda col: 6 - col)
-        return data
-
-    def _fitModel(self, model):
-        data = pd.read_csv('data.csv')
-        data = self.processReversedQuestions(data)
-        X = data[F_COLS]
-        model.fit(X)
-
-        return model
+    def pushDataCSV():
+        try:
+            subprocess.run(["git", "add", "data.csv"], check=True)
+            subprocess.run(["git", "commit", "-m", "updated data.csv file"], check=True)
+            subprocess.run(["git", "push"], check=True)
+            print(f"Successfully pushed data.csv to the repository.")
+        except subprocess.CalledProcessError as e:
+            print(f"An error occurred: {e}")
 
     # Function to load and integrate ML model
     def loadEvalML(self):
-        kmeans = KMeans(n_clusters=5, random_state=42)
-        self.model = self._fitModel(kmeans)
+        with open(PKL_MODEL_PATH, 'rb') as model_file:
+            self.model = pickle.load(model_file)
 
     def evaluateArray(self, array: List[int]) -> int:
         if self.model is None:
@@ -116,6 +102,7 @@ class BackendApp:
             return 0
 
     # Function to make REST call to OpenAI API
+    # Models and details need attention
     def callChatGPT(self, prompt: str) -> str:
         headers = {
             'Content-Type': 'application/json',
@@ -133,26 +120,38 @@ class BackendApp:
             raise Exception("Failed to fetch response from OpenAI API.")
 
     # Function to create PDF from ChatGPT response
-    def chatGPTWrapper(self, response: str):
+    # Logo needed here + visuals testing
+    def chatGPTWrapper(self, response: str) -> str:
         pdf = FPDF()
         pdf.add_page()
-        # put logo here
+        # Example: pdf.image('logo.png', x=10, y=8, w=33)
         pdf.set_font("Arial", size=12)
         pdf.cell(200, 10, txt=response, ln=True)
-        pdf.output("chatgpt_response.pdf")
+        pdf_file_path = "chatgpt_response.pdf"
+        pdf.output(pdf_file_path)
+        
+        return pdf_file_path
 
     # Function to send PDF to frontend
-    def sendPdfFront(self):
-        # send to frontend here
-        pass
+    # Front end connection w flask needed here
+    def sendPdfFront(filename):
+        try:
+            return send_file(filename, as_attachment=False)
+        except Exception as e:
+            return str(e)
 
 
 # Example usage
 if __name__ == "__main__":
     backend = BackendApp()   
+
     fArray = backend.validFrontEndArray()#get the array from frontend
     fDesires = backend.getDesires()#get the desires array from frontend
-    csvData = backend.pullDataCSV()
+    backend.pullDataCSV()
+
     backend.loadEvalML()
-    newRow = backend.addRowToData(backend.createArray(fArray))
-    backend.addRowToData(newRow)
+    newRow = backend.addRowToData(backend.createArray(fArray))  
+
+    backend.pushDataCSV()
+    finalPDF = backend.chatGPTWrapper(backend.callChatGPT())
+    backend.sendPdfFront(finalPDF)
