@@ -107,6 +107,15 @@ footer p {
     margin-left: -103px;
 }
 
+#learning-path li:hover{
+    background-color: #f8f8f8;
+    cursor: pointer;
+}
+
 #learning-path ul{
     list-style: none;
+}
+
+.logo span{
+    color: red;
 }
