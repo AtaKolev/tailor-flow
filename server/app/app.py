@@ -260,19 +260,63 @@ def survey():
     else:
         # Handle GET request for the survey page
         return render_template('survey.html')
-
-@app.route('/results.html', methods = ['GET'])
+@app.route('/results.html', methods=['GET'])
 def results():
     try:
         # Read the content of the generated learning path file
         with open("learning_path.txt", "r") as file:
             file_content = file.read()
-    except FileNotFoundError:
-        # Handle the case where the file is not found
-        file_content = "File not found."
 
-    # Render the results page with the learning path content
-    return render_template('results.html', content=file_content)
+        # Split the content into lines and remove empty lines
+        #lines = file_content.strip().split("\n")
+        #lines = [line.strip() for line in lines if line.strip()]  # Remove empty lines
+
+        #steps = []
+
+        # Loop through the lines and process in groups of 4 (title, description, course name, and link)
+        #for i in range(0, len(lines), 4):
+        #    title = lines[i].strip() if i < len(lines) else "No title available"
+        #    description = lines[i + 1].strip() if i + 1 < len(lines) else "No description available"
+        #    course_name = lines[i + 2].strip() if i + 2 < len(lines) else "No course name available"
+        #    course_link = lines[i + 3].strip() if i + 3 < len(lines) else "#"
+
+            #steps.append({
+            #    'title': title,
+            #    'description': description,
+            #    'course_name': course_name,
+            #    'course_link': course_link
+            #})
+
+        steps = []
+        courses = []
+        links = []
+        reasons = []
+        descriptions = []
+
+        for ele in file_content.split('\n'):
+            if ele[:4] == 'Step':
+                steps.append(ele)
+            elif ele[:6] == 'Course':
+                courses.append(ele)
+            elif ele[:4] == 'Link':
+                links.append(ele.split('(')[1][:-1])
+            elif ele[:3] == 'Why':
+                reasons.append(ele)
+            else:
+                if len(ele) != 0:
+                    descriptions.append(ele)
+    except FileNotFoundError:
+        steps = [{"title": "Error", "description": "Learning path file not found.", "course_link": "#"}]
+
+    return render_template('results.html', 
+                           steps=steps,
+                           courses=courses,
+                           links=links,
+                           reasons=reasons,
+                           descriptions=descriptions,
+                           zip=zip
+                           )
+
 
 # Example usage
 if __name__ == '__main__':

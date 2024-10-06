@@ -3,19 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Personalized learning path based on your career goals and personality traits.">
     <title>Personalized Learning Path</title>
+    
+    <!-- Import the correct fonts and CSS styles -->
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/result_styles.css') }}">
 </head>
 <body>
     <header>
-        <h1>T<span>&lt;AI&gt;</span>LOR.FLOW</h1>
+        <nav>
+            <div class="logo">
+                <h1>T<span>&lt;AI&gt;</span>LOR.FLOW</h1>
+            </div>
+        </nav>
     </header>
+    
     <main>
         <h2>Your Personalized Learning Path</h2>
-        <pre>{{ content }}</pre>
-    </main>
+
+        <div id="learning-path">
+            <ul>
+                {% for step, description, link, reason, course in zip(steps, descriptions, links, reasons, courses) %}
+                <li>
+                    <h2>{{ step }}</h2>
+                    <p>{{ description }}</p>
+                    <p>{{ course }}</p>
+                    <p><a href="{{ link }}" target="{{ link }}">{{ link }}</a></p>
+                    <p>{{ reason }}</p>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </main>    
+
+    <!-- Include your JS file -->
     <script src="{{ url_for('static', filename='js/result_script.js') }}"></script>
 </body>
 </html>
