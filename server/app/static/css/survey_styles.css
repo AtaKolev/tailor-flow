@@ -27,10 +27,14 @@ body {
 }
 
 .logo-text {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Armstrong', sans-serif;
     font-weight: 700;
     font-size: 20px;
     color: #333;
+}
+
+.logo-text span{
+    color: red;
 }
 
 .content {

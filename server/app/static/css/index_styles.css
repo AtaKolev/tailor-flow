@@ -23,9 +23,13 @@ nav {
 }
 
 .logo {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Armstrong', sans-serif;
     font-weight: 700;
     font-size: 1.2rem;
+}
+
+.logo span{
+    color: red;
 }
 
 .nav-links a {
